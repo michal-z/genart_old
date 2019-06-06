@@ -10,14 +10,14 @@ set CONFIG=%DEBUG%
 set CFLAGS=%CONFIG% /EHa- /GR- /Gy /Gw /W3 /nologo /I"external" /Fd"external.pdb.pch"
 set BUILD_SINGLE=
 
-if not exist external.pch cl %CFLAGS% /c /Yc"external.h" external.c /Fo"external.obj.pch"
+if not exist external.pch cl %CFLAGS% /c /Yc"external.h" external.cpp /Fo"external.obj.pch"
 
 set ERROR=0
 if "%BUILD_SINGLE%"=="" (
 	if exist *.exe del *.exe
 	if exist *.pdb del *.pdb
-	for /R %%G in (*.c) do (
-		if not "%%G"=="%cd%\external.c" if not "%%G"=="%cd%\library.c" (
+	for /R %%G in (*.cpp) do (
+		if not "%%G"=="%cd%\external.cpp" if not "%%G"=="%cd%\library.cpp" (
 			cl %CFLAGS% /Yu"external.h" %%G /link /incremental:no /opt:ref external.obj.pch & if ERRORLEVEL 1 set ERROR=1
 			if !ERROR! neq 0 goto end
 		)
@@ -25,7 +25,7 @@ if "%BUILD_SINGLE%"=="" (
 ) else (
 	if exist %BUILD_SINGLE%.exe del %BUILD_SINGLE%.exe
 	if exist %BUILD_SINGLE%.pdb del %BUILD_SINGLE%.pdb
-	cl %CFLAGS% /Yu"external.h" %BUILD_SINGLE%.c /link /incremental:no /opt:ref external.obj.pch
+	cl %CFLAGS% /Yu"external.h" %BUILD_SINGLE%.cpp /link /incremental:no /opt:ref external.obj.pch
 )
 
 :end
