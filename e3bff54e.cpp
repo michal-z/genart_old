@@ -4,48 +4,53 @@
 
 struct ROOT {
     VECTOR3 *image;
-    u32 w, h;
+    u32 image_width;
+    u32 image_height;
+    VECTOR2 *points;
 };
 
 static void Generate_Image(ROOT &root) {
-    for (u32 y = 0; y < root.h; ++y) {
-        for (u32 x = 0; x < root.w; ++x) {
-            const u32 idx = x + y * root.w;
-            root.image[idx] = VECTOR3{ 0.1f, 5.0f, 0.0f };
+    VECTOR2 p{ 1.0f, 0.5f };
+    arrput(root.points, p);
+
+    for (u32 y = 0; y < root.image_height; ++y) {
+        for (u32 x = 0; x < root.image_width; ++x) {
+            const u32 idx = x + y * root.image_width;
+            root.image[idx] = VECTOR3{ 1.1f, 0.5f + 0.5f * sinf(0.1f * x), 0.0f };
         }
     }
 }
 
-static void Save_Image(ROOT &root) {
-    u8 *data = (u8 *)malloc(root.w * root.h * 3);
+static void Save_Image(VECTOR3 *image, u32 width, u32 height) {
+    u8 *data = (u8 *)malloc(width * height * 3);
     if (data == nullptr) {
         printf("not enough memory\n");
         exit(1);
     }
-    for (u32 y = 0; y < root.h; ++y) {
-        for (u32 x = 0; x < root.w; ++x) {
-            const u32 idx = x + y * root.w;
-            data[idx * 3 + 0] = (u8)(255.0f * Saturate(root.image[idx].x));
-            data[idx * 3 + 1] = (u8)(255.0f * Saturate(root.image[idx].y));
-            data[idx * 3 + 2] = (u8)(255.0f * Saturate(root.image[idx].z));
+    for (u32 y = 0; y < height; ++y) {
+        for (u32 x = 0; x < width; ++x) {
+            const u32 idx = x + y * width;
+            data[idx * 3 + 0] = (u8)(255.0f * Saturate(image[idx].x));
+            data[idx * 3 + 1] = (u8)(255.0f * Saturate(image[idx].y));
+            data[idx * 3 + 2] = (u8)(255.0f * Saturate(image[idx].z));
         }
     }
-    stbi_write_png(NAME".png", root.w, root.h, 3, data, root.w * 3);
+    stbi_write_png(NAME".png", width, height, 3, data, width * 3);
     free(data);
 }
 
-int main() {
+i32 main() {
     ROOT root = {};
-    root.w = 1920;
-    root.h = 1080;
-    root.image = (VECTOR3 *)malloc(root.w * root.h * sizeof(*root.image));
+    root.image_width = 1920;
+    root.image_height = 1080;
+    root.image = (VECTOR3 *)malloc(root.image_width * root.image_height * sizeof(*root.image));
     if (root.image == nullptr) {
         printf("not enough memory\n");
         exit(1);
     }
-    memset(root.image, 0, root.w * root.h * sizeof(*root.image));
+    memset(root.image, 0, root.image_width * root.image_height * sizeof(*root.image));
     Generate_Image(root);
-    Save_Image(root);
+    Save_Image(root.image, root.image_width, root.image_height);
     free(root.image);
     return 0;
 }

@@ -133,3 +133,17 @@ inline f32 Clamp(f32 a, f32 min, f32 max) {
 inline f32 Saturate(f32 a) {
     return Min(Max(0.0f, a), 1.0f);
 }
+
+// returns [0.0f, 1.0f)
+inline f32 Randf() {
+    u32 exponent = 127;
+    u32 significand = (u32)(rand() & 0x7fff); // get 15 random bits
+    u32 result = (exponent << 23) | (significand << 8);
+    return *(f32 *)&result - 1.0f;
+}
+
+// returns [begin, end)
+inline f32 Randf(float begin, float end) {
+    assert(begin < end);
+    return begin + (end - begin) * Randf();
+}
