@@ -1,4 +1,5 @@
-#include "external.h"
+#pragma hdrstop("external.pch")
+#pragma comment(lib, "external.lib")
 #include "library.h"
 #define NAME "e3bff54e"
 

@@ -4,6 +4,12 @@
 #include <assert.h>
 #include <stdio.h>
 
+#ifdef USE_DX12
+#define WIN32_LEAN_AND_MEAN
+#include <d3d12.h>
+#include <dxgi1_4.h>
+#endif
+
 typedef char i8;
 typedef short i16;
 typedef int i32;
