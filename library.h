@@ -116,7 +116,7 @@ struct DESCRIPTOR_HEAP
     u32 capacity;
 };
 
-struct GRAPHICS_CONTEXT
+struct DX12_CONTEXT
 {
     ID3D12Device3 *device;
     ID3D12GraphicsCommandList2 *cmdlist;
@@ -141,23 +141,23 @@ struct GRAPHICS_CONTEXT
 
 void
 Init_Graphics_Context(HWND window,
-                      GRAPHICS_CONTEXT &gfx);
+                      DX12_CONTEXT &gfx);
 
 void
-Shutdown_Graphics_Context(GRAPHICS_CONTEXT &gfx);
+Shutdown_Graphics_Context(DX12_CONTEXT &gfx);
 
 DESCRIPTOR_HEAP &
-Get_Descriptor_Heap(GRAPHICS_CONTEXT &gfx,
+Get_Descriptor_Heap(DX12_CONTEXT &gfx,
                     D3D12_DESCRIPTOR_HEAP_TYPE type,
                     D3D12_DESCRIPTOR_HEAP_FLAGS flags,
                     u32 &descriptor_size);
 
 void
-Present_Frame(GRAPHICS_CONTEXT &gfx,
+Present_Frame(DX12_CONTEXT &gfx,
               u32 swap_interval);
 
 void
-Wait_For_GPU(GRAPHICS_CONTEXT &gfx);
+Wait_For_GPU(DX12_CONTEXT &gfx);
 
 void
 Load_File(const char *filename,
@@ -179,7 +179,7 @@ Create_Window(const char *name,
               u32 height);
 
 inline ID3D12GraphicsCommandList2 *
-Get_And_Reset_Command_List(GRAPHICS_CONTEXT &gfx)
+Get_And_Reset_Command_List(DX12_CONTEXT &gfx)
 {
     gfx.cmdalloc[gfx.frame_index]->Reset();
     gfx.cmdlist->Reset(gfx.cmdalloc[gfx.frame_index], nullptr);
@@ -187,7 +187,7 @@ Get_And_Reset_Command_List(GRAPHICS_CONTEXT &gfx)
 }
 
 inline void
-Allocate_Descriptors(GRAPHICS_CONTEXT &gfx,
+Allocate_Descriptors(DX12_CONTEXT &gfx,
                      D3D12_DESCRIPTOR_HEAP_TYPE type,
                      u32 count,
                      D3D12_CPU_DESCRIPTOR_HANDLE& handle)
@@ -200,7 +200,7 @@ Allocate_Descriptors(GRAPHICS_CONTEXT &gfx,
 }
 
 inline void
-Allocate_GPU_Descriptors(GRAPHICS_CONTEXT &gfx,
+Allocate_GPU_Descriptors(DX12_CONTEXT &gfx,
                          u32 count,
                          D3D12_CPU_DESCRIPTOR_HANDLE &cpu_handle,
                          D3D12_GPU_DESCRIPTOR_HANDLE &gpu_handle)
@@ -217,7 +217,7 @@ Allocate_GPU_Descriptors(GRAPHICS_CONTEXT &gfx,
 }
 
 inline D3D12_GPU_DESCRIPTOR_HANDLE
-Copy_Descriptors_To_GPU(GRAPHICS_CONTEXT &gfx,
+Copy_Descriptors_To_GPU(DX12_CONTEXT &gfx,
                         u32 count,
                         D3D12_CPU_DESCRIPTOR_HANDLE src_base)
 {
@@ -229,7 +229,7 @@ Copy_Descriptors_To_GPU(GRAPHICS_CONTEXT &gfx,
 }
 
 inline void
-Get_Back_Buffer(GRAPHICS_CONTEXT &gfx,
+Get_Back_Buffer(DX12_CONTEXT &gfx,
                 ID3D12Resource *&buffer,
                 D3D12_CPU_DESCRIPTOR_HANDLE &handle)
 {
@@ -239,7 +239,7 @@ Get_Back_Buffer(GRAPHICS_CONTEXT &gfx,
 }
 
 inline void
-Get_Depth_Stencil_Buffer(GRAPHICS_CONTEXT &gfx,
+Get_Depth_Stencil_Buffer(DX12_CONTEXT &gfx,
                          ID3D12Resource *&buffer,
                          D3D12_CPU_DESCRIPTOR_HANDLE &handle)
 {
@@ -248,7 +248,7 @@ Get_Depth_Stencil_Buffer(GRAPHICS_CONTEXT &gfx,
 }
 
 inline void
-Bind_GPU_Descriptor_Heap(const GRAPHICS_CONTEXT &gfx)
+Bind_GPU_Descriptor_Heap(const DX12_CONTEXT &gfx)
 {
     gfx.cmdlist->SetDescriptorHeaps(1, &gfx.gpu_descriptor_heaps[gfx.frame_index].heap);
 }

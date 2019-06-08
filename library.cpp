@@ -7,11 +7,11 @@
 #include "stb_perlin.h"
 
 #ifdef USE_DX12
-void Init_Descriptor_Heaps(GRAPHICS_CONTEXT &gfx);
+void Init_Descriptor_Heaps(DX12_CONTEXT &gfx);
 
 void
 Init_Graphics_Context(HWND window,
-                      GRAPHICS_CONTEXT &gfx)
+                      DX12_CONTEXT &gfx)
 {
     IDXGIFactory4 *factory;
 #ifdef _DEBUG
@@ -121,7 +121,7 @@ Init_Graphics_Context(HWND window,
 }
 
 void
-Shutdown_Graphics_Context(GRAPHICS_CONTEXT &gfx)
+Shutdown_Graphics_Context(DX12_CONTEXT &gfx)
 {
     // @Incomplete: Release all resources.
     SAFE_RELEASE(gfx.cmdlist);
@@ -141,7 +141,7 @@ Shutdown_Graphics_Context(GRAPHICS_CONTEXT &gfx)
 }
 
 void
-Present_Frame(GRAPHICS_CONTEXT &gfx,
+Present_Frame(DX12_CONTEXT &gfx,
               u32 swap_interval)
 {
     gfx.swapchain->Present(swap_interval, 0);
@@ -161,7 +161,7 @@ Present_Frame(GRAPHICS_CONTEXT &gfx,
 }
 
 void
-Wait_For_GPU(GRAPHICS_CONTEXT &gfx)
+Wait_For_GPU(DX12_CONTEXT &gfx)
 {
     gfx.cmdqueue->Signal(gfx.frame_fence, ++gfx.frame_count);
     gfx.frame_fence->SetEventOnCompletion(gfx.frame_count, gfx.frame_fence_event);
@@ -169,7 +169,7 @@ Wait_For_GPU(GRAPHICS_CONTEXT &gfx)
 }
 
 DESCRIPTOR_HEAP &
-Get_Descriptor_Heap(GRAPHICS_CONTEXT &gfx,
+Get_Descriptor_Heap(DX12_CONTEXT &gfx,
                     D3D12_DESCRIPTOR_HEAP_TYPE type,
                     D3D12_DESCRIPTOR_HEAP_FLAGS flags,
                     u32 &descriptor_size)
@@ -202,7 +202,7 @@ Get_Descriptor_Heap(GRAPHICS_CONTEXT &gfx,
 }
 
 static void
-Init_Descriptor_Heaps(GRAPHICS_CONTEXT &gfx)
+Init_Descriptor_Heaps(DX12_CONTEXT &gfx)
 {
     // render target descriptor heap (RTV)
     {
