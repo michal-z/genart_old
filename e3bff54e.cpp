@@ -1,35 +1,45 @@
-#pragma hdrstop("external.pch")
-#pragma comment(lib, "external.lib")
-#include "library.h"
+#pragma hdrstop("library.pch")
+#pragma comment(lib, "library.lib")
 #define NAME "e3bff54e"
 
-struct ROOT {
+struct ROOT
+{
     VECTOR3 *image;
     u32 image_width;
     u32 image_height;
     VECTOR2 *points;
 };
 
-static void Generate_Image(ROOT &root) {
-    VECTOR2 p{ 1.0f, 0.5f };
-    arrput(root.points, p);
+static void
+Generate_Image(ROOT &root)
+{
+    arrput(root.points, (VECTOR2{ 1.0f, 1.0f }));
 
-    for (u32 y = 0; y < root.image_height; ++y) {
-        for (u32 x = 0; x < root.image_width; ++x) {
+    for (u32 y = 0; y < root.image_height; ++y)
+    {
+        for (u32 x = 0; x < root.image_width; ++x)
+        {
             const u32 idx = x + y * root.image_width;
             root.image[idx] = VECTOR3{ 1.1f, 0.5f + 0.5f * sinf(0.1f * x), 0.0f };
         }
     }
 }
 
-static void Save_Image(VECTOR3 *image, u32 width, u32 height) {
+static void
+Save_Image(VECTOR3 *image,
+           u32 width,
+           u32 height)
+{
     u8 *data = (u8 *)malloc(width * height * 3);
-    if (data == nullptr) {
+    if (data == nullptr)
+    {
         printf("not enough memory\n");
         exit(1);
     }
-    for (u32 y = 0; y < height; ++y) {
-        for (u32 x = 0; x < width; ++x) {
+    for (u32 y = 0; y < height; ++y)
+    {
+        for (u32 x = 0; x < width; ++x)
+        {
             const u32 idx = x + y * width;
             data[idx * 3 + 0] = (u8)(255.0f * Saturate(image[idx].x));
             data[idx * 3 + 1] = (u8)(255.0f * Saturate(image[idx].y));
@@ -40,12 +50,15 @@ static void Save_Image(VECTOR3 *image, u32 width, u32 height) {
     free(data);
 }
 
-i32 main() {
+i32
+main()
+{
     ROOT root = {};
     root.image_width = 1920;
     root.image_height = 1080;
     root.image = (VECTOR3 *)malloc(root.image_width * root.image_height * sizeof(*root.image));
-    if (root.image == nullptr) {
+    if (root.image == nullptr)
+    {
         printf("not enough memory\n");
         exit(1);
     }

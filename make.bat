@@ -21,13 +21,15 @@ for /L %%G in (%SHADER_BEGIN%,1,%SHADER_END%) do (
 )
 
 
-if not exist external.pch (
-	cl %CFLAGS% /c /Yc"external.h" external.cpp /Fp"external.pch" /Fo"external.obj"
-	lib /nologo external.obj
+if not exist library.pch (
+    if exist library.lib del library.lib
+	cl %CFLAGS% /c /Yc"library.h" library.cpp /Fp"library.pch" /Fo"library.obj"
+	lib /nologo library.obj
 )
-if not exist external_dx12.pch (
-	cl %CFLAGS% /c /D"USE_DX12" /Yc"external.h" external.cpp /Fp"external_dx12.pch" /Fo"external_dx12.obj"
-	lib /nologo external_dx12.obj
+if not exist library_dx12.pch (
+    if exist library_dx12.lib del library_dx12.lib
+	cl %CFLAGS% /c /D"USE_DX12" /Yc"library.h" library.cpp /Fp"library_dx12.pch" /Fo"library_dx12.obj"
+	lib /nologo library_dx12.obj
 )
 
 
@@ -35,7 +37,7 @@ if "%BUILD_SINGLE%"=="" (
 	if exist *.exe del *.exe
 	for /R %%G in (*.pdb) do if not "%%~nxG"=="vc140.pdb" del %%G
 	for /R %%G in (*.cpp) do (
-		if not "%%~nxG"=="external.cpp" if not "%%~nxG"=="library.cpp" (
+		if not "%%~nxG"=="library.cpp" (
 			cl %CFLAGS% /Yu %%G /link /incremental:no /opt:ref & if !ERRORLEVEL! neq 0 goto end
 		)
 	)
