@@ -18,7 +18,7 @@
 #pragma comment(lib, "dxgi.lib")
 #define VHR(hr) if (FAILED(hr)) { assert(0); }
 #define SAFE_RELEASE(obj) if ((obj)) { (obj)->Release(); (obj) = nullptr; }
-#endif
+#endif // USE_DX12
 
 typedef char i8;
 typedef short i16;
@@ -139,35 +139,44 @@ struct GRAPHICS_CONTEXT
     u64 frame_count;
 };
 
-void                    Init_Graphics_Context(HWND window,
-                                              GRAPHICS_CONTEXT &gfx);
+void
+Init_Graphics_Context(HWND window,
+                      GRAPHICS_CONTEXT &gfx);
 
-void                    Shutdown_Graphics_Context(GRAPHICS_CONTEXT &gfx);
+void
+Shutdown_Graphics_Context(GRAPHICS_CONTEXT &gfx);
 
-DESCRIPTOR_HEAP &       Get_Descriptor_Heap(GRAPHICS_CONTEXT &gfx,
-                                            D3D12_DESCRIPTOR_HEAP_TYPE type,
-                                            D3D12_DESCRIPTOR_HEAP_FLAGS flags,
-                                            u32 &descriptor_size);
+DESCRIPTOR_HEAP &
+Get_Descriptor_Heap(GRAPHICS_CONTEXT &gfx,
+                    D3D12_DESCRIPTOR_HEAP_TYPE type,
+                    D3D12_DESCRIPTOR_HEAP_FLAGS flags,
+                    u32 &descriptor_size);
 
-void                    Present_Frame(GRAPHICS_CONTEXT &gfx,
-                                      u32 swap_interval);
+void
+Present_Frame(GRAPHICS_CONTEXT &gfx,
+              u32 swap_interval);
 
-void                    Wait_For_GPU(GRAPHICS_CONTEXT &gfx);
+void
+Wait_For_GPU(GRAPHICS_CONTEXT &gfx);
 
-void                    Load_File(const char *filename,
-                                  u32 &size,
-                                  u8 *&data);
+void
+Load_File(const char *filename,
+          u32 &size,
+          u8 *&data);
 
-void                    Update_Frame_Stats(HWND window,
-                                           const char *name,
-                                           f64 &time,
-                                           f32 &delta_time);
+void
+Update_Frame_Stats(HWND window,
+                   const char *name,
+                   f64 &time,
+                   f32 &delta_time);
 
-f64                     Get_Time();
+f64
+Get_Time();
 
-HWND                    Create_Window(const char *name,
-                                      u32 width,
-                                      u32 height);
+HWND
+Create_Window(const char *name,
+              u32 width,
+              u32 height);
 
 inline ID3D12GraphicsCommandList2 *
 Get_And_Reset_Command_List(GRAPHICS_CONTEXT &gfx)
