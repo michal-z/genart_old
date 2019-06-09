@@ -5,3 +5,5 @@
 *.cso
 *.suo
 *.lib
+*.png
+.vs

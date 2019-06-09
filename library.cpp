@@ -7,11 +7,10 @@
 #include "stb_perlin.h"
 
 #ifdef USE_DX12
-void Init_Descriptor_Heaps(DX12_CONTEXT &gfx);
+void Init_Descriptor_Heaps(DX12_CONTEXT &dx);
 
 void
-Init_Graphics_Context(HWND window,
-                      DX12_CONTEXT &gfx)
+Init_Graphics_Context(HWND window, DX12_CONTEXT &dx)
 {
     IDXGIFactory4 *factory;
 #ifdef _DEBUG
@@ -37,7 +36,7 @@ Init_Graphics_Context(HWND window,
         }
     }
 #endif
-    if (FAILED(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_1, IID_PPV_ARGS(&gfx.device))))
+    if (FAILED(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_1, IID_PPV_ARGS(&dx.device))))
     {
         MessageBox(window, "This application requires Windows 10 1709 (RS3) or newer.", "D3D12CreateDevice failed",
                    MB_OK | MB_ICONERROR);
@@ -48,7 +47,7 @@ Init_Graphics_Context(HWND window,
     cmdqueue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     cmdqueue_desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdqueue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    VHR(gfx.device->CreateCommandQueue(&cmdqueue_desc, IID_PPV_ARGS(&gfx.cmdqueue)));
+    VHR(dx.device->CreateCommandQueue(&cmdqueue_desc, IID_PPV_ARGS(&dx.cmdqueue)));
 
     DXGI_SWAP_CHAIN_DESC swapchain_desc = {};
     swapchain_desc.BufferCount = 4;
@@ -60,205 +59,202 @@ Init_Graphics_Context(HWND window,
     swapchain_desc.Windowed = TRUE;
 
     IDXGISwapChain *temp_swapchain;
-    VHR(factory->CreateSwapChain(gfx.cmdqueue, &swapchain_desc, &temp_swapchain));
-    VHR(temp_swapchain->QueryInterface(IID_PPV_ARGS(&gfx.swapchain)));
+    VHR(factory->CreateSwapChain(dx.cmdqueue, &swapchain_desc, &temp_swapchain));
+    VHR(temp_swapchain->QueryInterface(IID_PPV_ARGS(&dx.swapchain)));
     SAFE_RELEASE(temp_swapchain);
     SAFE_RELEASE(factory);
 
     RECT rect;
     GetClientRect(window, &rect);
-    gfx.resolution[0] = (u32)rect.right;
-    gfx.resolution[1] = (u32)rect.bottom;
+    dx.resolution[0] = (u32)rect.right;
+    dx.resolution[1] = (u32)rect.bottom;
 
     for (u32 i = 0; i < 2; ++i)
     {
-        VHR(gfx.device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&gfx.cmdalloc[i])));
+        VHR(dx.device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&dx.cmdalloc[i])));
     }
 
-    gfx.descriptor_size = gfx.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    gfx.descriptor_size_rtv = gfx.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    dx.descriptor_size = dx.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    dx.descriptor_size_rtv = dx.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    Init_Descriptor_Heaps(gfx);
+    Init_Descriptor_Heaps(dx);
 
     // swap buffer render targets
     {
         D3D12_CPU_DESCRIPTOR_HANDLE handle;
-        Allocate_Descriptors(gfx, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 4, handle);
+        Allocate_Descriptors(dx, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 4, handle);
 
         for (u32 i = 0; i < 4; ++i)
         {
-            VHR(gfx.swapchain->GetBuffer(i, IID_PPV_ARGS(&gfx.swapbuffers[i])));
-            gfx.device->CreateRenderTargetView(gfx.swapbuffers[i], nullptr, handle);
-            handle.ptr += gfx.descriptor_size_rtv;
+            VHR(dx.swapchain->GetBuffer(i, IID_PPV_ARGS(&dx.swapbuffers[i])));
+            dx.device->CreateRenderTargetView(dx.swapbuffers[i], nullptr, handle);
+            handle.ptr += dx.descriptor_size_rtv;
         }
     }
     // depth-stencil target
     {
-        auto image_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, gfx.resolution[0], gfx.resolution[1],
+        auto image_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, dx.resolution[0], dx.resolution[1],
                                                        1, 1);
         image_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-        VHR(gfx.device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                                                &image_desc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                                                &CD3DX12_CLEAR_VALUE(DXGI_FORMAT_D32_FLOAT, 1.0f, 0),
-                                                IID_PPV_ARGS(&gfx.ds_buffer)));
+        VHR(dx.device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                                               &image_desc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                                               &CD3DX12_CLEAR_VALUE(DXGI_FORMAT_D32_FLOAT, 1.0f, 0),
+                                               IID_PPV_ARGS(&dx.ds_buffer)));
 
         D3D12_CPU_DESCRIPTOR_HANDLE handle;
-        Allocate_Descriptors(gfx, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, handle);
+        Allocate_Descriptors(dx, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, handle);
 
         D3D12_DEPTH_STENCIL_VIEW_DESC view_desc = {};
         view_desc.Format = DXGI_FORMAT_D32_FLOAT;
         view_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         view_desc.Flags = D3D12_DSV_FLAG_NONE;
-        gfx.device->CreateDepthStencilView(gfx.ds_buffer, &view_desc, handle);
+        dx.device->CreateDepthStencilView(dx.ds_buffer, &view_desc, handle);
     }
 
-    VHR(gfx.device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, gfx.cmdalloc[0], nullptr,
-                                      IID_PPV_ARGS(&gfx.cmdlist)));
-    gfx.cmdlist->Close();
+    VHR(dx.device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, dx.cmdalloc[0], nullptr,
+                                     IID_PPV_ARGS(&dx.cmdlist)));
+    dx.cmdlist->Close();
 
-    VHR(gfx.device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&gfx.frame_fence)));
-    gfx.frame_fence_event = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
+    VHR(dx.device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dx.frame_fence)));
+    dx.frame_fence_event = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
 }
 
 void
-Shutdown_Graphics_Context(DX12_CONTEXT &gfx)
+Shutdown_Graphics_Context(DX12_CONTEXT &dx)
 {
     // @Incomplete: Release all resources.
-    SAFE_RELEASE(gfx.cmdlist);
-    SAFE_RELEASE(gfx.cmdalloc[0]);
-    SAFE_RELEASE(gfx.cmdalloc[1]);
-    SAFE_RELEASE(gfx.rt_heap.heap);
-    SAFE_RELEASE(gfx.ds_heap.heap);
+    SAFE_RELEASE(dx.cmdlist);
+    SAFE_RELEASE(dx.cmdalloc[0]);
+    SAFE_RELEASE(dx.cmdalloc[1]);
+    SAFE_RELEASE(dx.rt_heap.heap);
+    SAFE_RELEASE(dx.ds_heap.heap);
     for (u32 i = 0; i < 4; ++i)
     {
-        SAFE_RELEASE(gfx.swapbuffers[i]);
+        SAFE_RELEASE(dx.swapbuffers[i]);
     }
-    CloseHandle(gfx.frame_fence_event);
-    SAFE_RELEASE(gfx.frame_fence);
-    SAFE_RELEASE(gfx.swapchain);
-    SAFE_RELEASE(gfx.cmdqueue);
-    SAFE_RELEASE(gfx.device);
+    CloseHandle(dx.frame_fence_event);
+    SAFE_RELEASE(dx.frame_fence);
+    SAFE_RELEASE(dx.swapchain);
+    SAFE_RELEASE(dx.cmdqueue);
+    SAFE_RELEASE(dx.device);
 }
 
 void
-Present_Frame(DX12_CONTEXT &gfx,
-              u32 swap_interval)
+Present_Frame(DX12_CONTEXT &dx, u32 swap_interval)
 {
-    gfx.swapchain->Present(swap_interval, 0);
-    gfx.cmdqueue->Signal(gfx.frame_fence, ++gfx.frame_count);
+    dx.swapchain->Present(swap_interval, 0);
+    dx.cmdqueue->Signal(dx.frame_fence, ++dx.frame_count);
 
-    const u64 gpu_frame_count = gfx.frame_fence->GetCompletedValue();
+    const u64 gpu_frame_count = dx.frame_fence->GetCompletedValue();
 
-    if ((gfx.frame_count - gpu_frame_count) >= 2)
+    if ((dx.frame_count - gpu_frame_count) >= 2)
     {
-        gfx.frame_fence->SetEventOnCompletion(gpu_frame_count + 1, gfx.frame_fence_event);
-        WaitForSingleObject(gfx.frame_fence_event, INFINITE);
+        dx.frame_fence->SetEventOnCompletion(gpu_frame_count + 1, dx.frame_fence_event);
+        WaitForSingleObject(dx.frame_fence_event, INFINITE);
     }
 
-    gfx.frame_index = !gfx.frame_index;
-    gfx.back_buffer_index = gfx.swapchain->GetCurrentBackBufferIndex();
-    gfx.gpu_descriptor_heaps[gfx.frame_index].size = 0;
+    dx.frame_index = !dx.frame_index;
+    dx.back_buffer_index = dx.swapchain->GetCurrentBackBufferIndex();
+    dx.gpu_descriptor_heaps[dx.frame_index].size = 0;
 }
 
 void
-Wait_For_GPU(DX12_CONTEXT &gfx)
+Wait_For_GPU(DX12_CONTEXT &dx)
 {
-    gfx.cmdqueue->Signal(gfx.frame_fence, ++gfx.frame_count);
-    gfx.frame_fence->SetEventOnCompletion(gfx.frame_count, gfx.frame_fence_event);
-    WaitForSingleObject(gfx.frame_fence_event, INFINITE);
+    dx.cmdqueue->Signal(dx.frame_fence, ++dx.frame_count);
+    dx.frame_fence->SetEventOnCompletion(dx.frame_count, dx.frame_fence_event);
+    WaitForSingleObject(dx.frame_fence_event, INFINITE);
 }
 
 DESCRIPTOR_HEAP &
-Get_Descriptor_Heap(DX12_CONTEXT &gfx,
+Get_Descriptor_Heap(DX12_CONTEXT &dx,
                     D3D12_DESCRIPTOR_HEAP_TYPE type,
                     D3D12_DESCRIPTOR_HEAP_FLAGS flags,
                     u32 &descriptor_size)
 {
     if (type == D3D12_DESCRIPTOR_HEAP_TYPE_RTV)
     {
-        descriptor_size = gfx.descriptor_size_rtv;
-        return gfx.rt_heap;
+        descriptor_size = dx.descriptor_size_rtv;
+        return dx.rt_heap;
     }
     else if (type == D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
     {
-        descriptor_size = gfx.descriptor_size_rtv;
-        return gfx.ds_heap;
+        descriptor_size = dx.descriptor_size_rtv;
+        return dx.ds_heap;
     }
     else if (type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
     {
-        descriptor_size = gfx.descriptor_size;
+        descriptor_size = dx.descriptor_size;
         if (flags == D3D12_DESCRIPTOR_HEAP_FLAG_NONE)
         {
-            return gfx.cpu_descriptor_heap;
+            return dx.cpu_descriptor_heap;
         }
         else if (flags == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
         {
-            return gfx.gpu_descriptor_heaps[gfx.frame_index];
+            return dx.gpu_descriptor_heaps[dx.frame_index];
         }
     }
     assert(0);
     descriptor_size = 0;
-    return gfx.cpu_descriptor_heap;
+    return dx.cpu_descriptor_heap;
 }
 
 static void
-Init_Descriptor_Heaps(DX12_CONTEXT &gfx)
+Init_Descriptor_Heaps(DX12_CONTEXT &dx)
 {
     // render target descriptor heap (RTV)
     {
-        gfx.rt_heap.capacity = 16;
+        dx.rt_heap.capacity = 16;
 
         D3D12_DESCRIPTOR_HEAP_DESC heap_desc = {};
-        heap_desc.NumDescriptors = gfx.rt_heap.capacity;
+        heap_desc.NumDescriptors = dx.rt_heap.capacity;
         heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        VHR(gfx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&gfx.rt_heap.heap)));
-        gfx.rt_heap.cpu_start = gfx.rt_heap.heap->GetCPUDescriptorHandleForHeapStart();
+        VHR(dx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&dx.rt_heap.heap)));
+        dx.rt_heap.cpu_start = dx.rt_heap.heap->GetCPUDescriptorHandleForHeapStart();
     }
     // depth-stencil descriptor heap (DSV)
     {
-        gfx.ds_heap.capacity = 8;
+        dx.ds_heap.capacity = 8;
 
         D3D12_DESCRIPTOR_HEAP_DESC heap_desc = {};
-        heap_desc.NumDescriptors = gfx.ds_heap.capacity;
+        heap_desc.NumDescriptors = dx.ds_heap.capacity;
         heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
         heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        VHR(gfx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&gfx.ds_heap.heap)));
-        gfx.ds_heap.cpu_start = gfx.ds_heap.heap->GetCPUDescriptorHandleForHeapStart();
+        VHR(dx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&dx.ds_heap.heap)));
+        dx.ds_heap.cpu_start = dx.ds_heap.heap->GetCPUDescriptorHandleForHeapStart();
     }
     // non-shader visible descriptor heap (CBV, SRV, UAV)
     {
-        gfx.cpu_descriptor_heap.capacity = 10000;
+        dx.cpu_descriptor_heap.capacity = 10000;
 
         D3D12_DESCRIPTOR_HEAP_DESC heap_desc = {};
-        heap_desc.NumDescriptors = gfx.cpu_descriptor_heap.capacity;
+        heap_desc.NumDescriptors = dx.cpu_descriptor_heap.capacity;
         heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        VHR(gfx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&gfx.cpu_descriptor_heap.heap)));
-        gfx.cpu_descriptor_heap.cpu_start = gfx.cpu_descriptor_heap.heap->GetCPUDescriptorHandleForHeapStart();
+        VHR(dx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&dx.cpu_descriptor_heap.heap)));
+        dx.cpu_descriptor_heap.cpu_start = dx.cpu_descriptor_heap.heap->GetCPUDescriptorHandleForHeapStart();
     }
     // shader visible descriptor heaps (CBV, SRV, UAV)
     {
         for (u32 i = 0; i < 2; ++i)
         {
-            gfx.gpu_descriptor_heaps[i].capacity = 10000;
+            dx.gpu_descriptor_heaps[i].capacity = 10000;
 
             D3D12_DESCRIPTOR_HEAP_DESC heap_desc = {};
-            heap_desc.NumDescriptors = gfx.gpu_descriptor_heaps[i].capacity;
+            heap_desc.NumDescriptors = dx.gpu_descriptor_heaps[i].capacity;
             heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
             heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-            VHR(gfx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&gfx.gpu_descriptor_heaps[i].heap)));
+            VHR(dx.device->CreateDescriptorHeap(&heap_desc, IID_PPV_ARGS(&dx.gpu_descriptor_heaps[i].heap)));
 
-            gfx.gpu_descriptor_heaps[i].cpu_start = gfx.gpu_descriptor_heaps[i].heap->GetCPUDescriptorHandleForHeapStart();
-            gfx.gpu_descriptor_heaps[i].gpu_start = gfx.gpu_descriptor_heaps[i].heap->GetGPUDescriptorHandleForHeapStart();
+            dx.gpu_descriptor_heaps[i].cpu_start = dx.gpu_descriptor_heaps[i].heap->GetCPUDescriptorHandleForHeapStart();
+            dx.gpu_descriptor_heaps[i].gpu_start = dx.gpu_descriptor_heaps[i].heap->GetGPUDescriptorHandleForHeapStart();
         }
     }
 }
 
 void
-Load_File(const char *filename,
-          u32 &size,
-          u8 *&data)
+Load_File(const char *filename, u32 &size, u8 *&data)
 {
     FILE *file = fopen(filename, "rb");
     assert(file);
@@ -301,7 +297,8 @@ Update_Frame_Stats(HWND window,
     static f64 header_refresh_time = 0.0;
     static u32 frame_count = 0;
 
-    if (previous_time < 0.0) {
+    if (previous_time < 0.0)
+    {
         previous_time = Get_Time();
         header_refresh_time = previous_time;
     }
@@ -310,7 +307,8 @@ Update_Frame_Stats(HWND window,
     delta_time = (f32)(time - previous_time);
     previous_time = time;
 
-    if ((time - header_refresh_time) >= 1.0) {
+    if ((time - header_refresh_time) >= 1.0)
+    {
         const f64 fps = frame_count / (time - header_refresh_time);
         const f64 ms = (1.0 / fps) * 1000.0;
         char header[256];
@@ -323,10 +321,7 @@ Update_Frame_Stats(HWND window,
 }
 
 static LRESULT CALLBACK
-Process_Window_Message(HWND window,
-                       UINT message,
-                       WPARAM wparam,
-                       LPARAM lparam)
+Process_Window_Message(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
     switch (message)
     {
@@ -345,9 +340,7 @@ Process_Window_Message(HWND window,
 }
 
 HWND
-Create_Window(const char *name,
-              u32 width,
-              u32 height)
+Create_Window(const char *name, u32 width, u32 height)
 {
     WNDCLASS winclass = {};
     winclass.lpfnWndProc = Process_Window_Message;
