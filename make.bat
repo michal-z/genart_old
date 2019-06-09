@@ -21,6 +21,9 @@ for /L %%G in (%SHADER_BEGIN%,1,%SHADER_END%) do (
     %DXC% /D"PS_%%G" /E"PS%%G_Main" /Fo"data\shaders\%%G.ps.cso" /T ps_6_0 master.hlsl & if !ERRORLEVEL! neq 0 goto end
 )
 
+if "%1"=="clean" (
+    if exist *.pch del *.pch
+)
 
 if not exist library.pch (
     if exist library.lib del library.lib
