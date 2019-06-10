@@ -10,7 +10,7 @@
 void Init_Descriptor_Heaps(DX12_CONTEXT &dx);
 
 void
-Init_Graphics_Context(HWND window, DX12_CONTEXT &dx)
+Init_DX12_Context(HWND window, DX12_CONTEXT &dx)
 {
     IDXGIFactory4 *factory;
 #ifdef _DEBUG
@@ -120,7 +120,7 @@ Init_Graphics_Context(HWND window, DX12_CONTEXT &dx)
 }
 
 void
-Shutdown_Graphics_Context(DX12_CONTEXT &dx)
+Shutdown_DX12_Context(DX12_CONTEXT &dx)
 {
     // @Incomplete: Release all resources.
     SAFE_RELEASE(dx.cmdlist);

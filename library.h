@@ -146,10 +146,10 @@ struct DX12_CONTEXT
 };
 
 void
-Init_Graphics_Context(HWND window, DX12_CONTEXT &dx);
+Init_DX12_Context(HWND window, DX12_CONTEXT &dx);
 
 void
-Shutdown_Graphics_Context(DX12_CONTEXT &dx);
+Shutdown_DX12_Context(DX12_CONTEXT &dx);
 
 DESCRIPTOR_HEAP &
 Get_Descriptor_Heap(DX12_CONTEXT &dx,

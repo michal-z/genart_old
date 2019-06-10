@@ -17,18 +17,24 @@ Generate_Image(ROOT &root)
 
     for (u32 i = 0; i < 10000000; ++i)
     {
-        arrput(positions, (VECTOR2{ Rand(-0.5f, 0.5f), Rand(-0.5f, 0.5f) }));
+        float theta = 2.0f * 3.1415926f * Rand01();
+        float x = 0.4f * cosf(theta) + Rand01() * 0.01f;
+        float y = 0.4f * sinf(theta) + Rand01() * 0.01f;
+        arrput(positions, (VECTOR2{ x, y }));
         arrput(colors, (VECTOR3{ Rand01(), Rand01(), Rand01() }));
     }
 
     for (u32 i = 0; i < (u32)arrlenu(positions); ++i)
     {
+        positions[i].x = Clamp(positions[i].x, -1.0f, 1.0f);
+        positions[i].y = Clamp(positions[i].y, -1.0f, 1.0f);
+
         u32 x = (u32)((0.5f + 0.5f * positions[i].x) * root.image_width);
         u32 y = (u32)((0.5f + 0.5f * positions[i].y) * root.image_height);
         assert(x < root.image_width && y < root.image_height);
 
         const u32 idx = x + y * root.image_width;
-        root.image[idx] -= colors[i] * 0.005f;
+        root.image[idx] -= colors[i] * 0.01f;
     }
 }
 
